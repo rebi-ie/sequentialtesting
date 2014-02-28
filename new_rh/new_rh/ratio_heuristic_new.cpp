@@ -7,9 +7,14 @@
 #include <list>
 #include <iterator>
 #include <bitset>
+#include <dirent.h>
+
 
 
 using namespace std;
+
+ int NUM_OF_COMPONENTS;
+ int NUM_OF_TESTS;
 
 struct Component{
 	int id;
@@ -28,8 +33,8 @@ struct Test{
 
 
 //Globals
-int NUM_OF_COMPONENTS;
-int NUM_OF_TESTS;
+
+
 list<Test> META_TESTS;
 vector<Component> COMPONENTS;
 vector<unsigned int> BEST;
@@ -38,17 +43,27 @@ double BEST_COST;
 stringstream FILENAME;
 
 //Declarations
-void ReadFromFile();
+void ReadFromFile(string filename);
 void CalculateParameters();
 bool Comparison(Test a, Test b);
-double FindBestSequence();
+void FindBestSequence();
 
 
+/// <summary>
+/// Comparisons the specified a.
+/// </summary>
+/// <param name="a">A.</param>
+/// <param name="b">The b.</param>
+/// <returns></returns>
 bool Comparison(Test a, Test b){
 	return a.ratio<b.ratio;
 }
 
-double FindBestSequence(){
+/// <summary>
+/// Finds the best sequence.
+/// </summary>
+/// <returns></returns>
+void FindBestSequence(){
 	META_TESTS.sort(Comparison);//meta testleri ratiolara göre sıraladı
 
 	double cost = 0;
@@ -66,7 +81,8 @@ double FindBestSequence(){
 		list<Test>::iterator it_test = META_TESTS.begin();
 		while (it_test != META_TESTS.end())
 		{
-			if ((it_test->testarray & scheduled.testarray) == 1)
+			
+			if ((it_test->testarray & scheduled.testarray).any() )
 			{
 				it_test = META_TESTS.erase(it_test);
 			}
@@ -76,35 +92,37 @@ double FindBestSequence(){
 			}
 		}
 	}
-	return cost;
+	BEST_COST = cost;
 }
 
 
+/// <summary>
+/// Calculates the parameters.
+/// </summary>
 void CalculateParameters(){
 	//meta testlerin cost'larını, probability'lerini ve ratiolarını hesapla
-	for each (Test t in META_TESTS)
-	{
-	double cost_i = BETA;
+	for (list<Test>::iterator it_test = META_TESTS.begin(); it_test != META_TESTS.end(); it_test++){
+		double cost_i = BETA;
 		double prob = 1;
-		for (int i = 0; i < t.testarray.size; i++)
-		{
-			if (t.testarray[i])
-			{
-				cost_i = cost_i + (COMPONENTS[i].cost);
-				prob = prob*COMPONENTS[i].probablity;
+		for (int j = 0; j< it_test->testarray.size(); j++){
+			if (it_test->testarray[j]){
+				cost_i = cost_i + (COMPONENTS[j].cost);
+				prob = prob*COMPONENTS[j].probablity;
 			}
 		}
-		t.cost = cost_i;
-		t.probability = prob;
-		t.ratio = (t.cost / (1 - t.probability));
+		it_test->cost = cost_i;
+		it_test->probability = prob;
+		it_test->ratio = (it_test->cost / (1 - it_test->probability));
 	}
 }
 
-void ReadFromFile(){
+/// <summary>
+/// Reads from file.
+/// </summary>
+void ReadFromFile(string filename){
 	ifstream Source;
-	string root;
-	root = "C:\\Users\\Rebi\\Desktop\\Research\\data\\" + FILENAME.str();
-	Source.open(root);
+	
+	Source.open(filename);
 	Source >> BETA;
 	Source >> NUM_OF_COMPONENTS;
 	for (int i = 0; i<NUM_OF_COMPONENTS; i++){
@@ -114,7 +132,7 @@ void ReadFromFile(){
 		Source >> comp.cost;
 		COMPONENTS.push_back(comp);
 	}
-	Source >> NUM_OF_TESTS;
+		Source >> NUM_OF_TESTS;
 	for (int i = 0; i<NUM_OF_TESTS; i++){
 		Test t;
 		Source >> t.id;
@@ -129,55 +147,59 @@ void ReadFromFile(){
 	}
 }
 
+/// <summary>
+/// Mains this instance.
+/// </summary>
+/// <returns></returns>
 int main()
 {
 	ofstream Result;
-	stringstream resultfile;
-	resultfile.str("");
-	resultfile.clear();
-	resultfile << "Ratio_Heuristic_Results.txt";
-	string root;
-	root = "C:\\Users\\Rebi\\Desktop\\Research\\results\\" + resultfile.str();
-	Result.open(root);
+	string datadir = "C:\\Users\\Rebi\\Desktop\\Research\\data\\";
+	string resultfile = "C:\\Users\\Rebi\\Desktop\\Research\\results\\Ratio_Heuristic_Results.txt";
+	Result.open(resultfile);
 	Result << "Ratio_Heuristic_Results" << endl;
 
-	for (int j = 1; j <= 50; j++){
-		FILENAME.str("");
-		FILENAME.clear();
-		FILENAME << "Meta-" << j << ".txt";
+	DIR *dir;
+	struct dirent *ent;
+	
+	if (dir=opendir(datadir.c_str()))
+	{
+		while (ent = readdir(dir))
+		{
+			if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0)
+			{
+				META_TESTS.clear();
+				COMPONENTS.clear();
+				BEST.clear();			
+				
+				ReadFromFile( datadir + (string) ent->d_name);
+				CalculateParameters();//Meta testlerin cost, probabilitylerini ve ratiolarını hesaplar
+				FindBestSequence(); //Setlerin costlarını hesaplar ve min cost'a sahip seti bulur, ekrana ve dosyaya yazdırır.
+						
+				string strn;
+				strn = FILENAME.str();
+				Result << strn << "\t";
+				cout.precision(8);
+				cout.width(15);
+				Result << fixed << BEST_COST << "\t";
+				cout << strn << " cost" << BEST_COST << endl;
 
-		META_TESTS.clear();
-		COMPONENTS.clear();
-		BEST.clear();
-
-		ReadFromFile();//Input dosyasını okur
-		CalculateParameters();//Meta testlerin cost, probabilitylerini ve ratiolarını hesaplar
-		FindBestSequence(); //Setlerin costlarını hesaplar ve min cost'a sahip seti bulur, ekrana ve dosyaya yazdırır.
-
-		string strn;
-		strn = FILENAME.str();
-		Result << strn << "\t";
-		cout.precision(8);
-		cout.width(15);
-		Result << fixed << BEST_COST << "\t";
-		cout << strn << " cost" << BEST_COST << endl;
-
-		for (int i = 0; i<BEST.size(); i++){
-			if (i == BEST.size() - 1){
-				cout << BEST[i] << "\t";
-				Result << BEST[i] << "\t";
-			}
-			else{
-				cout << BEST[i] << " ";
-				Result << BEST[i] << " ";
+				for (int i = 0; i<BEST.size(); i++){
+					if (i == BEST.size() - 1){
+						cout << BEST[i] << "\t";
+						Result << BEST[i] << "\t";
+					}
+					else{
+						cout << BEST[i] << " ";
+						Result << BEST[i] << " ";
+					}
+				}
+				cout << endl;
+				Result << endl;
 			}
 		}
-		cout << endl;
-		Result << endl;
-
 	}
 	Result.close();
-
 	system("pause");
 	return 0;
 }
