@@ -9,6 +9,7 @@
 #include <bitset>
 #include <dirent.h>
 #include<ctime>
+#include<algorithm>
 
 using namespace std;
 
@@ -37,18 +38,69 @@ struct Candidate{
 
 struct Feasible{
 	double cost;
-	list<Test> feasible_set;
+	vector<Test> feasible_set;
 };
 
 
 int NUM_OF_COMPONENTS;
 int NUM_OF_TESTS;
 vector<Test> META_TESTS;
-list<Feasible> FEASIBLES;
+vector<Feasible> FEASIBLES;
 vector<Component> COMPONENTS;
 Feasible BEST;
 double BETA;
-stringstream FILENAME;
+
+
+vector<Test> removeintersecting(Test x, vector<Test> Tests)
+{
+	vector<Test> remtests; // remaining tests
+	for each (Test t in Tests)// check all tests
+	{
+		if ((x.testarray & t.testarray).none())
+		{// if no component of t is in x
+			remtests.push_back(t);// t remains in set
+		}
+	}
+	return remtests;
+}
+
+bool isFeasible(vector<Test> Candidate)
+{// if there exist one test for each component then test is feasible
+	// since there cant be 2 tests for same component in list list we count number or ones
+	int numtest = 0;
+	for each (Test t in Candidate)
+	{
+		numtest += t.testarray.count(); // add number of ones in test array
+	}
+
+	return (numtest == NUM_OF_COMPONENTS); // true is there is one test for each component
+	
+
+}
+void CreateFeasibles2(vector<Test> Tests, vector<Test> Candidate)
+{
+	// select one test x from set and add it to candidate
+	for (int i = 0; i < Tests.size(); i++)
+	{
+		Test x = Tests[i];
+		Candidate.push_back(x);
+		if (isFeasible(Candidate))
+		{// if a feasible set is formed add it to list of feasible sets and stop
+			Feasible f;
+			f.feasible_set = Candidate;
+			FEASIBLES.push_back(f);
+		}
+		else
+		{// not yet a feasible set need to add more
+		// remove elements intersecting with x from set
+			Tests = removeintersecting(x, Tests);
+			//  recurse for new set
+			CreateFeasibles2(Tests, Candidate);
+
+		}
+	}	
+
+}
 
 void CreateFeasibles(){
 	//initialize candidate list
@@ -84,7 +136,7 @@ void CreateFeasibles(){
 					if (cand.num_of_ones == NUM_OF_COMPONENTS){//feasible bir set oluştu.
 						//FEASIBLES.push_back(cand.meta_tests);
 						Feasible x;
-						list<Test> feasibleset;
+						vector<Test> feasibleset;
 						for (int l = 0; l<cand.meta_tests.size(); l++){
 							Test t;
 							t.id = cand.meta_tests[l];
@@ -140,7 +192,7 @@ void CreateFeasibles(){
 				candidates.front().tested_comps = tests;
 				if (candidates.front().num_of_ones == NUM_OF_COMPONENTS){//bir feasible set oluştu.
 					Feasible x;
-					list<Test> feasibleset;
+					vector<Test> feasibleset;
 					for (int l = 0; l<candidates.front().meta_tests.size(); l++){
 						Test t;
 						t.id = candidates.front().meta_tests[l];
@@ -218,12 +270,14 @@ bool Comparison(Test a, Test b){
 
 void FindBestSequence(){
 	int index = 0;
-	for (list<Feasible>::iterator it = FEASIBLES.begin(); it != FEASIBLES.end(); it++){
+	for (vector<Feasible>::iterator it = FEASIBLES.begin(); it != FEASIBLES.end(); it++){
 		index++;
-		(*it).feasible_set.sort(Comparison);
+		
+		//(*it).feasible_set.sort(Comparison);
+		std::sort(it->feasible_set.begin(), it->feasible_set.end(),Comparison);
 		double cost = 0;
 		double prob = 1;
-		for (list<Test>::iterator it_test = (*it).feasible_set.begin(); it_test != (*it).feasible_set.end(); it_test++){
+		for (vector<Test>::iterator it_test = (*it).feasible_set.begin(); it_test != (*it).feasible_set.end(); it_test++){
 			cost = cost + prob*(*it_test).cost;
 			prob = prob*(*it_test).probability;
 		}
@@ -242,7 +296,7 @@ void FindBestSequence(){
 int main(){
 	ofstream Result;
 	string datadir = "C:\\Users\\Rebi\\Desktop\\Research\\data\\";
-	string resultfile = "C:\\Users\\Rebi\\Desktop\\Research\\results\\Ratio_Heuristic_Results.txt";
+	string resultfile = "C:\\Users\\Rebi\\Desktop\\Research\\results\\Feasible_Results.txt";
 	Result.open(resultfile);
 	Result << "Feasible_Set_Results" << endl;
 
@@ -260,29 +314,29 @@ int main(){
 				time_t elapsed;
 				time(&start);
 
-
-
 				COMPONENTS.clear();
 				META_TESTS.clear();
 				FEASIBLES.clear();
 
 				ReadFromFile(datadir + (string)ent->d_name);
 				CalculateParameters();//Meta testlerin cost ve probabilitylerini hesaplar
-				CreateFeasibles();//Feasible setleri oluşturur, setleri oluşturan testleri ratiolara göre sıralar
+				vector<Test> alltests = META_TESTS;
+				vector<Test> initial;
+				//CreateFeasibles2(alltests, initial);//Feasible setleri oluşturur, setleri oluşturan testleri ratiolara göre sıralar
+				CreateFeasibles();
 				FindBestSequence(); //Setlerin costlarını hesaplar ve min cost'a sahip seti bulur, ekrana ve dosyaya yazdırır.
 
 				time(&elapsed); //time_limit check
 				solving_time = difftime(elapsed, start);
 
-				string strn;
-				strn = FILENAME.str();
-				Result << strn << "\t";
+			
+				Result << (string)ent->d_name << "\t";
 				Result << fixed << BEST.cost << "\t";
-				cout << strn << "\t";
+				cout << (string)ent->d_name << "\t";
 				cout << " cost=\t" << BEST.cost << "\t";
 				cout << " solv.time=\t" << solving_time << "\t";
 
-				for (list<Test>::iterator it = BEST.feasible_set.begin(); it != BEST.feasible_set.end(); it++){
+				for (vector<Test>::iterator it = BEST.feasible_set.begin(); it != BEST.feasible_set.end(); it++){
 					Result << (*it).id << " ";
 					cout << (*it).id << " ";
 				}
