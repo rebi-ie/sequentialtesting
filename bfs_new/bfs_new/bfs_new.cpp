@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include<ctime>
 #include<algorithm>
+#include <set>
 
 using namespace std;
 
@@ -27,8 +28,18 @@ struct Test{
 	double cost;
 	double probability;
 	double ratio;
-	bitset<50> testarray;
+	vector<int> testarray;
+
+	bool operator<(const Test& rhs) const{
+		return ratio<rhs.ratio;
+	}
+	bool operator==(const Test& rhs) const{
+		return ratio == rhs.ratio;
+	}
 };
+
+
+
 
 struct Candidate{
 	int num_of_ones;
@@ -51,78 +62,195 @@ Feasible BEST;
 double BETA;
 
 
-vector<Test> removeintersecting(Test x, vector<Test> Tests)
-{
-	vector<Test> remtests; // remaining tests
-	for each (Test t in Tests)// check all tests
-	{
-		if ((x.testarray & t.testarray).none())
-		{// if no component of t is in x
-			remtests.push_back(t);// t remains in set
-		}
-	}
-	return remtests;
-}
+//bool isFeasible(set<Test> Candidate)
+//{// if there exist one test for each component then test is feasible
+//	// since there cant be 2 tests for same component in list list we count number or ones
+//	int numtest = 0;
+//	bitset<50> comps;
+//	for each (Test t in Candidate)
+//	{
+//		numtest += t.testarray.count(); // add number of ones in test array
+//		comps = comps | t.testarray;
+//	}
+//
+//	return (numtest == NUM_OF_COMPONENTS && comps.count() == NUM_OF_COMPONENTS); // true is there is one test for each component
+//
+//
+//}
 
-bool isFeasible(vector<Test> Candidate)
-{// if there exist one test for each component then test is feasible
-	// since there cant be 2 tests for same component in list list we count number or ones
-	int numtest = 0;
-	for each (Test t in Candidate)
-	{
-		numtest += t.testarray.count(); // add number of ones in test array
-	}
+//set<set<Test>> powerset(const set<Test>& s, size_t n)
+//{
+//	typedef  set<Test>::const_iterator SetCIt;
+//	typedef  set<set<Test>>::const_iterator PowerSetCIt;
+//	set<set<Test>> res; 
+//	if (n > 0) {
+//		set<set<Test>> ps = powerset(s, n - 1);
+//		for (PowerSetCIt ss = ps.begin(); ss != ps.end(); ss++)
+//			for (SetCIt el = s.begin(); el != s.end(); el++) {
+//				set<Test> subset(*ss);
+//				subset.insert(*el);
+//				res.insert(subset);
+//				/*if (isFeasible(subset))
+//				{
+//					break;
+//				}*/
+//			}
+//		res.insert(ps.begin(), ps.end());
+//	}
+//	else
+//		res.insert(set<Test>());
+//	return res;
+//}
+//
+// set<set<Test>> powerset(const set<Test>& s)
+//{
+//	return powerset(s, s.size());
+//}
 
-	return (numtest == NUM_OF_COMPONENTS); // true is there is one test for each component
-	
 
-}
-void CreateFeasibles2(vector<Test> Tests, vector<Test> Candidate)
-{
-	// select one test x from set and add it to candidate
-	for (int i = 0; i < Tests.size(); i++)
-	{
-		Test x = Tests[i];
-		Candidate.push_back(x);
-		if (isFeasible(Candidate))
-		{// if a feasible set is formed add it to list of feasible sets and stop
-			Feasible f;
-			f.feasible_set = Candidate;
-			FEASIBLES.push_back(f);
-		}
-		else
-		{// not yet a feasible set need to add more
-		// remove elements intersecting with x from set
-			Tests = removeintersecting(x, Tests);
-			//  recurse for new set
-			CreateFeasibles2(Tests, Candidate);
+ //typedef std::set<Test> set_type; 
+ //typedef std::set<set_type> powerset_type;
 
-		}
-	}	
+ //powerset_type powerset(set_type const& set)
+ //{
+	// typedef set_type::const_iterator set_iter;
+	// typedef std::vector<set_iter> vec;
+	// typedef vec::iterator vec_iter;
 
-}
+	// struct local
+	// {
+	//	 static Test dereference(set_iter v) { return *v; }
+	// };
+
+	// powerset_type result;
+
+	// vec elements;
+	// do
+	// {
+	//	 set_type tmp;
+	//	 std::transform(elements.begin(), elements.end(),
+	//		 std::inserter(tmp, tmp.end()),
+	//		 local::dereference);
+	//	 result.insert(tmp);
+	//	 if (!elements.empty() && ++elements.back() == set.end())
+	//	 {
+	//		 elements.pop_back();
+	//	 }
+	//	 else
+	//	 {
+	//		 set_iter iter;
+	//		 if (elements.empty())
+	//		 {
+	//			 iter = set.begin();
+	//		 }
+	//		 else
+	//		 {
+	//			 iter = elements.back();
+	//			 ++iter;
+	//		 }
+	//		 for (; iter != set.end(); ++iter)
+	//		 {
+	//			 elements.push_back(iter);
+	//		 }
+	//	 }
+	// } while (!elements.empty());
+
+	// return result;
+ //}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//vector<Test> removeintersecting(Test x, vector<Test> Tests)
+//{
+//	vector<Test> remtests; // remaining tests
+//	for each (Test t in Tests)// check all tests
+//	{
+//		if ((x.testarray & t.testarray).none())
+//		{// if no component of t is in x
+//			remtests.push_back(t);// t remains in set
+//		}
+//	}
+//	return remtests;
+//}
+
+
+
+
+//bool isFeasible(vector<Test> Candidate)
+//{// if there exist one test for each component then test is feasible
+//	// since there cant be 2 tests for same component in list list we count number or ones
+//	int numtest = 0;
+//	bitset<50> comps;
+//	for each (Test t in Candidate)
+//	{
+//		numtest += t.testarray.count(); // add number of ones in test array
+//		comps = comps | t.testarray;
+//	}
+//
+//	return (numtest == NUM_OF_COMPONENTS && comps.count() == NUM_OF_COMPONENTS); // true is there is one test for each component
+//	
+//
+//}
+//void CreateFeasibles2(vector<Test>  Tests, vector<Test>  Candidate)
+//{
+//	// select one test x from set and add it to candidate
+//	for (int i = 0 ; i < Tests.size(); i++)
+//	{
+//		Test x = Tests[i];
+//		Candidate.push_back(x);
+//		if (isFeasible(Candidate))
+//		{// if a feasible set is formed add it to list of feasible sets and stop
+//			Feasible f;
+//			f.feasible_set = Candidate;
+//			FEASIBLES.push_back(f);
+//		}
+//		else
+//		{// not yet a feasible set need to add more
+//		// remove elements intersecting with x from set
+//			Tests = removeintersecting(x, Tests);
+//			//  recurse for new set
+//			CreateFeasibles2( Tests, Candidate);
+//
+//		}
+//	}	
+//
+//}
 
 void CreateFeasibles(){
 	//initialize candidate list
-	list<Candidate> candidates;
+	vector<Candidate> candidates;
 	for (int i = 0; i<META_TESTS.size(); i++){//bir test tut
 		for (int j = i; j<META_TESTS.size(); j++){//başka bir test tut
 			if (i != j){
 				int say = 0;
 				int count_i = 0;
 				int count_j = 0;
-				vector<int> tests;
-				tests.resize(NUM_OF_COMPONENTS, 0);
+				vector<int> tests(NUM_OF_COMPONENTS);
 				for (int k = 0; k<NUM_OF_COMPONENTS; k++){//tek tek elemanlarına bak ve karşılaştır
-					if (META_TESTS[i].testarray[k] == 1 && META_TESTS[j].testarray[k] == 1){
+					if (META_TESTS[i].testarray[k]  && META_TESTS[j].testarray[k] ){
 						say++;
 						break;
 					}
-					if (META_TESTS[i].testarray[k] == 1){
+					if (META_TESTS[i].testarray[k] ){
 						tests[k] = 1;
 						count_i++;
 					}
-					if (META_TESTS[j].testarray[k] == 1){
+					if (META_TESTS[j].testarray[k] ){
 						tests[k] = 1;
 						count_j++;
 					}
@@ -161,6 +289,7 @@ void CreateFeasibles(){
 		}
 	}
 
+	vector<int> tests(NUM_OF_COMPONENTS);
 	//use candidate list entries
 	while (candidates.size()>0){
 		for (int i = 0; i<META_TESTS.size(); i++){
@@ -170,32 +299,33 @@ void CreateFeasibles(){
 			int say = 0;
 			int count_i = 0;
 			int count_j = 0;
-			vector<int> tests;
-			tests.resize(NUM_OF_COMPONENTS, 0);
+			
+			std::fill(tests.begin(), tests.end(), 0);
+			Candidate * thecand = &candidates.back();
 			for (int k = 0; k<NUM_OF_COMPONENTS; k++){//tek tek elemanlarına bak ve karşılaştır
-				if (META_TESTS[i].testarray[k] == 1 && candidates.front().tested_comps[k] == 1){
+				if (META_TESTS[i].testarray[k]  && thecand->tested_comps[k] ){
 					say++;
 					break;
 				}
-				if (META_TESTS[i].testarray[k] == 1){
+				if (META_TESTS[i].testarray[k]){
 					tests[k] = 1;
 					count_i++;
 				}
-				if (candidates.front().tested_comps[k] == 1){
+				if (thecand->tested_comps[k]){
 					tests[k] = 1;
 					count_j++;
 				}
 			}
 			if (say == 0){
-				candidates.front().meta_tests.push_back(i + 1);
-				candidates.front().num_of_ones = count_i + count_j;
-				candidates.front().tested_comps = tests;
-				if (candidates.front().num_of_ones == NUM_OF_COMPONENTS){//bir feasible set oluştu.
+				thecand->meta_tests.push_back(i + 1);
+				thecand->num_of_ones = count_i + count_j;
+				thecand->tested_comps = tests;
+				if (thecand->num_of_ones == NUM_OF_COMPONENTS){//bir feasible set oluştu.
 					Feasible x;
 					vector<Test> feasibleset;
-					for (int l = 0; l<candidates.front().meta_tests.size(); l++){
+					for (int l = 0; l<thecand->meta_tests.size(); l++){
 						Test t;
-						t.id = candidates.front().meta_tests[l];
+						t.id = thecand->meta_tests[l];
 						for (int m = 0; m<META_TESTS.size(); m++){
 							if (t.id == META_TESTS[m].id){
 								t.cost = META_TESTS[m].cost;
@@ -208,8 +338,9 @@ void CreateFeasibles(){
 					}
 					x.feasible_set = feasibleset;
 					FEASIBLES.push_back(x);
-					list<Candidate>::iterator it = candidates.begin();
-					it = candidates.erase(it);
+					//list<Candidate>::iterator it = candidates.begin();
+					//it = candidates.erase(it);
+					candidates.pop_back();
 				}
 			}
 		}
@@ -236,13 +367,11 @@ void ReadFromFile(string filename){
 	for (int i = 0; i<NUM_OF_TESTS; i++){
 		Test t;
 		Source >> t.id;
-		vector<int> test_array;
+		vector<int> test_array(NUM_OF_COMPONENTS);
 		for (int j = 0; j<NUM_OF_COMPONENTS; j++){
-			bool a;
-			Source >> a;
-			t.testarray[j] = a;
+			Source >> test_array[j];
 		}
-
+		t.testarray = test_array;
 		META_TESTS.push_back(t);
 	}
 }
@@ -264,9 +393,7 @@ void CalculateParameters(){
 	}
 }
 
-bool Comparison(Test a, Test b){
-	return a.ratio<b.ratio;
-}
+
 
 void FindBestSequence(){
 	int index = 0;
@@ -274,7 +401,7 @@ void FindBestSequence(){
 		index++;
 		
 		//(*it).feasible_set.sort(Comparison);
-		std::sort(it->feasible_set.begin(), it->feasible_set.end(),Comparison);
+		std::sort(it->feasible_set.begin(), it->feasible_set.end());
 		double cost = 0;
 		double prob = 1;
 		for (vector<Test>::iterator it_test = (*it).feasible_set.begin(); it_test != (*it).feasible_set.end(); it_test++){
@@ -311,7 +438,6 @@ int main(){
 			{
 				double solving_time = 0;
 				time_t start, end;
-				time_t elapsed;
 				time(&start);
 
 				COMPONENTS.clear();
@@ -320,14 +446,34 @@ int main(){
 
 				ReadFromFile(datadir + (string)ent->d_name);
 				CalculateParameters();//Meta testlerin cost ve probabilitylerini hesaplar
-				vector<Test> alltests = META_TESTS;
-				vector<Test> initial;
+			/*	vector<Test> alltests = META_TESTS;
+				vector<Test> initial;*/
+
+			/*	set<Test> alltests;
+				for each (Test var in META_TESTS)
+				{
+					alltests.insert(var);
+				}
+
+				set<set<Test>> thepowerset = powerset(alltests);
+
+				for each (set<Test> subset in thepowerset)
+				{
+					vector<Test> candidate(subset.begin(), subset.end());
+					if (isFeasible(candidate))
+					{
+						Feasible f;
+						f.feasible_set = candidate;
+						FEASIBLES.push_back(f);
+					}
+				}*/
+
 				//CreateFeasibles2(alltests, initial);//Feasible setleri oluşturur, setleri oluşturan testleri ratiolara göre sıralar
 				CreateFeasibles();
 				FindBestSequence(); //Setlerin costlarını hesaplar ve min cost'a sahip seti bulur, ekrana ve dosyaya yazdırır.
 
-				time(&elapsed); //time_limit check
-				solving_time = difftime(elapsed, start);
+				time(&end); //time_limit check
+				solving_time = difftime(end, start);
 
 			
 				Result << (string)ent->d_name << "\t";
@@ -347,7 +493,6 @@ int main(){
 		}
 	}
 	Result.close();
-
 	system("pause");
 	return 0;
 }
