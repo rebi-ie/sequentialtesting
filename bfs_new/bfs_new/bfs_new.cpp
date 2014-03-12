@@ -364,6 +364,7 @@ void ReadFromFile(string filename){
 		COMPONENTS.push_back(comp);
 	}
 	Source >> NUM_OF_TESTS;
+	NUM_OF_TESTS = 500;
 	for (int i = 0; i<NUM_OF_TESTS; i++){
 		Test t;
 		Source >> t.id;

@@ -3,29 +3,33 @@
 #include <fstream>
 #include <string>
 #include <dirent.h>
-#include<ctime>
+#include <ctime>
 using namespace std;
 
-struct Component{
+struct Component
+{
 	int id;
 	double cost;
 	double probablity;
 };
 
-struct Test{
+struct Test
+{
 	int id;
 	double cost;
 	double probability;
 	vector<int> testarray;
 };
 
-struct Candidate{
+struct Candidate
+{
 	int num_of_ones;
 	vector<int> meta_tests;
 	vector<int> tested_comps;
 };
 
-struct FeasibleSet{
+struct FeasibleSet
+{
 	double cost;
 	vector<Test> tests;
 };
@@ -41,61 +45,82 @@ FeasibleSet BEST;
 
 //TODO : tidy up this function
 void CreateFeasibleSets(){
-	//initialize candidate list
+	//initialize candidate list of 2 independent meta tests
+	//going through all tests is not possible.
 	vector<Candidate> candidates;
-	for (int i = 0; i<META_TESTS.size(); i++){//bir test tut
-		for (int j = i; j<META_TESTS.size(); j++){//başka bir test tut
-			if (i != j){
-				int say = 0;
-				int count_i = 0;
-				int count_j = 0;
-				vector<int> tests(NUM_OF_COMPONENTS);
-				for (int k = 0; k<NUM_OF_COMPONENTS; k++){//tek tek elemanlarına bak ve karşılaştır
-					if (META_TESTS[i].testarray[k]  && META_TESTS[j].testarray[k] ){
-						say++;
-						break;
-					}
-					if (META_TESTS[i].testarray[k] ){
-						tests[k] = 1;
-						count_i++;
-					}
-					if (META_TESTS[j].testarray[k] ){
-						tests[k] = 1;
-						count_j++;
-					}
+	for (int i = 0; i < META_TESTS.size(); i++)
+	{
+		for (int j = i; j < META_TESTS.size(); j++)
+		{
+			bool does_not_overlap = true;
+			int count_i = 0;
+			int count_j = 0;
+			vector<int> tests(NUM_OF_COMPONENTS);
+			for (int k = 0; k < NUM_OF_COMPONENTS; k++)//tek tek elemanlarına bak ve karşılaştır
+			{
+				if (META_TESTS[i].testarray[k] && META_TESTS[j].testarray[k])
+				{
+					does_not_overlap = false;
+					break;
 				}
-				if (say == 0){
-					Candidate cand;
-					cand.meta_tests.push_back(i + 1);
-					cand.meta_tests.push_back(j + 1);
-					cand.tested_comps = tests;
-					cand.num_of_ones = count_i + count_j;
-					if (cand.num_of_ones == NUM_OF_COMPONENTS){//feasible bir set oluştu.
-						//FEASIBLES.push_back(cand.meta_tests);
-						FeasibleSet x;
-						vector<Test> feasibleset;
-						for (int l = 0; l<cand.meta_tests.size(); l++){
-							Test t;
-							t.id = cand.meta_tests[l];
-							for (int m = 0; m<META_TESTS.size(); m++){
-								if (t.id == META_TESTS[m].id){
-									t.cost = META_TESTS[m].cost;
-									t.probability = META_TESTS[m].probability;
-									break;
-								}
+				if (META_TESTS[i].testarray[k])
+				{
+					tests[k] = 1;
+					count_i++;
+				}
+				if (META_TESTS[j].testarray[k])
+				{
+					tests[k] = 1;
+					count_j++;
+				}
+			}
+
+
+
+
+
+			if (does_not_overlap)
+			{
+				Candidate cand;
+				cand.meta_tests.push_back(i + 1);
+				cand.meta_tests.push_back(j + 1);
+				cand.tested_comps = tests;
+				cand.num_of_ones = count_i + count_j;
+				if (cand.num_of_ones == NUM_OF_COMPONENTS)
+				{//feasible bir set oluştu.
+					FeasibleSet x;
+					vector<Test> feasibleset;
+					for (int l = 0; l < cand.meta_tests.size(); l++)
+					{
+						Test t;
+						t.id = cand.meta_tests[l];
+						for (int m = 0; m < META_TESTS.size(); m++)
+						{
+							if (t.id == META_TESTS[m].id)
+							{
+								t.cost = META_TESTS[m].cost;
+								t.probability = META_TESTS[m].probability;
+								break;
 							}
-							feasibleset.push_back(t);
 						}
-						x.tests = feasibleset;
-						FEASIBLES.push_back(x);
+						feasibleset.push_back(t);
 					}
-					else{
-						candidates.push_back(cand);//daha tüm elemanların testi tamamlanmadı.
-					}
+					x.tests = feasibleset;
+					FEASIBLES.push_back(x);
+				}
+				else
+				{
+					candidates.push_back(cand);//daha tüm elemanların testi tamamlanmadı.
 				}
 			}
 		}
+
 	}
+
+
+
+
+
 
 	vector<int> tests(NUM_OF_COMPONENTS);
 	//use candidate list entries
@@ -172,6 +197,9 @@ void ReadFromFile(string filename){
 
 	Source >> NUM_OF_TESTS;
 
+	// Override
+	NUM_OF_TESTS = 500;
+
 	for (int i = 0; i<NUM_OF_TESTS; i++){
 		Test t;
 		Source >> t.id;
@@ -189,23 +217,24 @@ void CalculateParameters()
 {
 	double cost, prob;
 
-	for each (Test test in META_TESTS)
+	for (int i = 0; i < META_TESTS.size(); i++)
 	{
 		cost = BETA;
 		prob = 1;
-		for (int i = 0; i < NUM_OF_COMPONENTS; i++)
+		for (int j = 0; j < NUM_OF_COMPONENTS; j++)
 		{
-			cost += COMPONENTS[i].cost;
-			prob *= COMPONENTS[i].probablity;
+			cost += COMPONENTS[j].cost;
+			prob *= COMPONENTS[j].probablity;
 		}
-		test.cost = cost;
-		test.probability = prob;
+		META_TESTS[i].cost = cost;
+		META_TESTS[i].probability = prob;
 	}
 }
 
 //finds the best feasible set in FEASIBLES
 void FindBestFeasibleSet()
 {
+	BEST.cost = INFINITE;
 	for each (FeasibleSet feasible in FEASIBLES)
 	{
 		double cost = 0;
@@ -219,6 +248,7 @@ void FindBestFeasibleSet()
 		if (cost < BEST.cost)
 		{
 			BEST = feasible;
+			
 		}
 	}
 }
@@ -258,7 +288,7 @@ int main(){
 				Result << fixed << BEST.cost << "\t";
 				cout << (string)ent->d_name << "\t";
 				cout << " cost=\t" << BEST.cost << "\t";
-				cout << " solv.time=\t" << solving_time << "\t";
+				cout << " time=\t" << solving_time << "\t";
 
 				for each (Test test in BEST.tests)
 				{

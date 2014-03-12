@@ -134,7 +134,7 @@ int main()
 {
 	ofstream Result;
 	string datadir = "C:\\Users\\Rebi\\Desktop\\Research\\data\\";
-	string resultfile = "C:\\Users\\Rebi\\Desktop\\Research\\results\\Ratio_Heuristic_Results.txt";
+	string resultfile = "C:\\Users\\Rebi\\Desktop\\Research\\results\\Ratio_Heuristic_Results2.txt";
 	Result.open(resultfile);
 	Result << "Ratio_Heuristic_Results" << endl;
 
